@@ -1,0 +1,12 @@
+{
+  "name": "event-board-vue",
+  "version": "0.1.0",
+  "description": "Event discovery board: Vue 3 frontend (CDN, no build) + zero-dependency Node HTTP backend with JSON persistence. Filter/search/paginate.",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types server/index.ts",
+    "test": "node --experimental-strip-types test/api.test.ts"
+  },
+  "keywords": ["vue3", "events", "directory", "rest", "node", "typescript"],
+  "license": "MIT"
+}

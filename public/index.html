@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Event Board</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root { --bg: #f5f6f8; --card: #fff; --ink: #1a1a1a; --muted: #6b7280; --accent: #4f46e5; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--ink); }
+    header { padding: 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    h1 { font-size: 20px; margin: 0 24px 0 0; }
+    input, select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    main { padding: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .card .genre { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 600; }
+    .card h3 { margin: 8px 0 4px; font-size: 17px; }
+    .card .meta { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .card .price { margin-top: 12px; font-weight: 700; }
+    .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 60px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Event Board</h1>
+    <input v-model.trim="q" placeholder="Search name / venue..." @input="load" />
+    <select v-model="city" @change="load"><option value="">All cities</option><option v-for="c in facets.cities" :value="c">{{ c }}</option></select>
+    <select v-model="genre" @change="load"><option value="">All genres</option><option v-for="g in facets.genres" :value="g">{{ g }}</option></select>
+    <span v-if="loading">loading…</span>
+  </header>
+  <main>
+    <div class="card" v-for="e in events" :key="e.id">
+      <div class="genre">{{ e.genre }}</div>
+      <h3>{{ e.name }}</h3>
+      <div class="meta">{{ e.venue }} · {{ e.city }}</div>
+      <div class="meta">{{ e.date }}</div>
+      <div class="price">€{{ (e.priceCents / 100).toFixed(2) }}</div>
+    </div>
+    <div class="empty" v-if="!loading && events.length === 0">No events match.</div>
+  </main>
+</div>
+<script>
+const { createApp, ref, onMounted } = Vue;
+createApp({
+  setup() {
+    const events = ref([]);
+    const facets = ref({ genres: [], cities: [] });
+    const q = ref(""); const city = ref(""); const genre = ref("");
+    const loading = ref(false);
+    async function load() {
+      loading.value = true;
+      const p = new URLSearchParams();
+      if (q.value) p.set("q", q.value);
+      if (city.value) p.set("city", city.value);
+      if (genre.value) p.set("genre", genre.value);
+      const r = await fetch("/api/events?" + p.toString());
+      events.value = (await r.json()).items;
+      loading.value = false;
+    }
+    onMounted(async () => {
+      facets.value = await (await fetch("/api/facets")).json();
+      load();
+    });
+    return { events, facets, q, city, genre, loading, load };
+  },
+}).mount("#app");
+</script>
+</body>
+</html>
